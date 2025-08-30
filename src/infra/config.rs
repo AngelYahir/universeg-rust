@@ -5,6 +5,7 @@ use std::env;
 pub struct Config {
     pub database_url: String,
     pub port: u16,
+    pub debug: bool,
 }
 
 impl Config {
@@ -16,8 +17,16 @@ impl Config {
             .unwrap_or_else(|_| "3000".to_string())
             .parse::<u16>()
             .map_err(|e| anyhow::anyhow!("Invalid Port: {e}"))?;
+        let debug = env::var("LOG_DEBUG")
+            .unwrap_or_else(|_| "false".to_string())
+            .parse::<bool>()
+            .map_err(|e| anyhow::anyhow!("Invalid DEBUG value: {e}"))?;
 
-        Ok(Self { database_url, port })
+        Ok(Self {
+            database_url,
+            port,
+            debug,
+        })
     }
 }
 
