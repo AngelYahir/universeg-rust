@@ -3,6 +3,7 @@ use tokio::net::TcpListener;
 use tracing::info;
 
 mod controllers;
+mod dto;
 mod infra;
 mod routes;
 mod state;

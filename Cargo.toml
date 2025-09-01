@@ -18,3 +18,9 @@ sqlx = { version = "0.8.6", features = [
 ] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt", "json"] }
+validator = { version = "0.20.0", features = ["derive"] }
+async-trait = "0.1.89"
+futures = "0.3.31"
+regex = "1.11.2"
+lazy_static = "1.5.0"
+once_cell = "1.21.3"
