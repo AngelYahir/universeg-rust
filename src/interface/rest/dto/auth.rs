@@ -42,32 +42,25 @@ pub struct AuthResponseDto {
     pub username: String,
 }
 
-fn validate_password(pwd: &str) -> Result<(), ValidationError> {
-    // Largo mínimo
+pub fn validate_password(pwd: &str) -> Result<(), ValidationError> {
     if pwd.len() < 8 {
         return Err(ValidationError::new("password_length"));
     }
-    // Solo caracteres permitidos (opcional, si quieres restringirlos)
     if !PASSWORD_ALLOWED_CHARS.is_match(pwd) {
         return Err(ValidationError::new("password_charset"));
     }
-    // Al menos una minúscula
     if !pwd.chars().any(|c| c.is_ascii_lowercase()) {
         return Err(ValidationError::new("password_lowercase"));
     }
-    // Al menos una mayúscula
     if !pwd.chars().any(|c| c.is_ascii_uppercase()) {
         return Err(ValidationError::new("password_uppercase"));
     }
-    // Al menos un dígito
     if !pwd.chars().any(|c| c.is_ascii_digit()) {
         return Err(ValidationError::new("password_digit"));
     }
-    // Al menos un especial del set
     const SPECIALS: &[char] = &['@', '$', '!', '%', '*', '?', '&'];
     if !pwd.chars().any(|c| SPECIALS.contains(&c)) {
         return Err(ValidationError::new("password_special"));
     }
-
     Ok(())
 }

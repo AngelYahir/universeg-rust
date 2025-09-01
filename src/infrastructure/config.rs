@@ -6,6 +6,8 @@ pub struct Config {
     pub database_url: String,
     pub port: u16,
     pub debug: bool,
+    pub jwt_secret: String,
+    pub jwt_exp_hours: i64,
 }
 
 impl Config {
@@ -21,11 +23,18 @@ impl Config {
             .unwrap_or_else(|_| "false".to_string())
             .parse::<bool>()
             .map_err(|e| anyhow::anyhow!("Invalid DEBUG value: {e}"))?;
+        let jwt_secret = require_env("JWT_SECRET")?;
+        let jwt_exp_hours = env::var("JWT_EXP_HOURS")
+            .unwrap_or_else(|_| "8".to_string())
+            .parse::<i64>()
+            .map_err(|e| anyhow::anyhow!("Invalid JWT_EXP_HOURS value: {e}"))?;
 
         Ok(Self {
             database_url,
             port,
             debug,
+            jwt_secret,
+            jwt_exp_hours,
         })
     }
 }
