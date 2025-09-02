@@ -4,6 +4,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct Hs256Jwt {
     key: EncodingKey,
     dec: DecodingKey,

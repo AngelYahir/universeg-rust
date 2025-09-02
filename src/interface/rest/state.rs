@@ -1,3 +1,4 @@
+use crate::app::ports::JwtService;
 use crate::app::usecases::auth::{
     get_info::GetInfoHandler, login::LoginHandler, register::RegisterHandler,
 };
@@ -8,4 +9,5 @@ pub struct ApiDeps {
     pub login_handler: Arc<dyn LoginHandler>,
     pub register_handler: Arc<dyn RegisterHandler>,
     pub get_info_handler: Arc<dyn GetInfoHandler>,
+    pub jwt_service: Arc<dyn JwtService>,
 }

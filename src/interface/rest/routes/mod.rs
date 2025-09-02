@@ -3,8 +3,8 @@ use axum::{Router, routing::get};
 
 pub mod auth;
 
-pub fn routes() -> Router<ApiDeps> {
+pub fn routes(deps: ApiDeps) -> Router<()> {
     Router::new()
         .route("/", get(|| async { "Hello there" }))
-        .merge(auth::router())
+        .merge(auth::routes(deps))
 }

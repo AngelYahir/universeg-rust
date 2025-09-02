@@ -1,3 +1,4 @@
+use crate::interface::rest::state::ApiDeps;
 use axum::Router;
 use std::sync::Arc;
 
@@ -23,16 +24,17 @@ pub async fn build_app() -> anyhow::Result<Router> {
         crate::infrastructure::security::password::BcryptHasher,
         jwt.clone(),
     );
-    let get_info = GetInfoHandlerImpl::new(user_repo.clone(), jwt.clone());
+    let get_info = GetInfoHandlerImpl::new(user_repo.clone());
 
     // State
-    let deps = crate::interface::rest::state::ApiDeps {
+    let deps = ApiDeps {
         login_handler: Arc::new(login),
         register_handler: Arc::new(register),
         get_info_handler: Arc::new(get_info),
+        jwt_service: Arc::new(jwt),
     };
 
-    let app: Router = crate::interface::rest::routes::routes().with_state(deps);
+    let app: Router = crate::interface::rest::routes::routes(deps);
 
     Ok(app)
 }
