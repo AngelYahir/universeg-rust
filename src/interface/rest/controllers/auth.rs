@@ -4,6 +4,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use axum_extra::extract::TypedHeader;
+use axum_extra::headers::{Authorization, authorization::Bearer};
 use serde::Serialize;
 use serde_json::json;
 use validator::Validate;
@@ -65,4 +67,28 @@ pub async fn register(
         token: res.jwt,
         username: res.username,
     }))
+}
+
+pub async fn get_info(
+    State(deps): State<ApiDeps>,
+    auth_header: Option<TypedHeader<Authorization<Bearer>>>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let token = if let Some(header) = auth_header {
+        header.token().to_string()
+    } else {
+        return Err(ApiError(
+            json!({ "message": "Authorization header missing" }),
+        ));
+    };
+    let res = deps
+        .get_info_handler
+        .handle(crate::app::usecases::auth::get_info::GetInfoCommand { id: token })
+        .await
+        .map_err(|e| ApiError(json!({ "message": e.to_string() })))?;
+    Ok(Json(json!({
+        "id": res.id,
+        "username": res.username,
+        "email": res.email,
+        "is_email_verified": res.is_email_verified,
+    })))
 }

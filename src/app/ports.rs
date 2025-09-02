@@ -5,6 +5,8 @@ use uuid::Uuid;
 
 #[derive(thiserror::Error, Debug)]
 pub enum AppError {
+    #[error("not found")]
+    NotFound,
     #[error("invalid credentials")]
     InvalidCredentials,
     #[error("conflict")]
@@ -24,6 +26,7 @@ pub trait UserRepository: Send + Sync {
         username: Username,
         password_hash: String,
     ) -> Result<User, AppError>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AppError>;
 }
 
 #[async_trait]
@@ -35,4 +38,5 @@ pub trait PasswordHasher: Send + Sync {
 #[async_trait]
 pub trait JwtService: Send + Sync {
     async fn sign(&self, user_id: Uuid) -> Result<String, AppError>;
+    async fn verify(&self, token: &str) -> Result<Uuid, AppError>;
 }

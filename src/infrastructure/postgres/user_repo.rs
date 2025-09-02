@@ -2,6 +2,7 @@ use super::pool::DbPool;
 use anyhow::Context;
 use async_trait::async_trait;
 use sqlx::FromRow;
+use tracing::error;
 use uuid::Uuid;
 
 use crate::app::ports::{AppError, UserRepository};
@@ -24,6 +25,7 @@ struct UserRow {
     email: String,
     username: String,
     password_hash: String,
+    is_email_verified: bool,
 }
 
 impl TryFrom<UserRow> for User {
@@ -33,7 +35,13 @@ impl TryFrom<UserRow> for User {
         let email = Email::parse(&r.email)?;
         let username = Username::parse(&r.username)?;
         let password_hash = PasswordHash::from_hash(r.password_hash)?;
-        Ok(User::new(r.id, email, username, password_hash))
+        Ok(User::new(
+            r.id,
+            email,
+            username,
+            password_hash,
+            r.is_email_verified,
+        ))
     }
 }
 
@@ -41,15 +49,20 @@ impl TryFrom<UserRow> for User {
 impl UserRepository for PgUserRepository {
     async fn find_by_email(&self, email: &Email) -> Result<Option<User>, AppError> {
         let row = sqlx::query_as::<_, UserRow>(
-            "SELECT id, email, username, password_hash FROM users WHERE email = $1",
+            "SELECT id, email, username, password_hash, is_email_verified FROM users WHERE email = $1",
         )
         .bind(email.as_str())
         .fetch_optional(&self.pool)
         .await
+        .inspect_err(|e| {
+            error!(error = %e, "SQL query failed");
+        })
         .context("users.find error")
         .map_err(AppError::from)?;
 
-        row.map(User::try_from).transpose()
+        row.map(User::try_from).transpose().inspect_err(|e| {
+            error!(error = %e, "Mapping UserRow to User failed");
+        })
     }
 
     async fn create(
@@ -61,16 +74,39 @@ impl UserRepository for PgUserRepository {
         let rec = sqlx::query_as::<_, UserRow>(
             "INSERT INTO users (email, username, password_hash)
              VALUES ($1, $2, $3)
-             RETURNING id, email, username, password_hash",
+             RETURNING id, email, username, password_hash, is_email_verified",
         )
         .bind(email.as_str())
         .bind(username.as_str())
-        .bind(&password_hash)
+        .bind(password_hash)
         .fetch_one(&self.pool)
         .await
+        .inspect_err(|e| {
+            error!(error = %e, "SQL query failed");
+        })
         .context("users.create error")
         .map_err(AppError::from)?;
 
-        User::try_from(rec)
+        User::try_from(rec).inspect_err(|e| {
+            error!(error = %e, "Mapping UserRow to User failed");
+        })
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AppError> {
+        let row = sqlx::query_as::<_, UserRow>(
+            "SELECT id, email, username, password_hash, is_email_verified FROM users WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .inspect_err(|e| {
+            error!(error = %e, "SQL query failed");
+        })
+        .context("users.find_by_id error")
+        .map_err(AppError::from)?;
+
+        Ok(row.map(User::try_from).transpose().inspect_err(|e| {
+            error!(error = %e, "Mapping UserRow to User failed");
+        })?)
     }
 }

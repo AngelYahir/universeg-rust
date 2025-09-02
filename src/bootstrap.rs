@@ -13,19 +13,23 @@ pub async fn build_app() -> anyhow::Result<Router> {
         crate::infrastructure::security::jwt::Hs256Jwt::new(&cfg.jwt_secret, cfg.jwt_exp_hours);
 
     // Use cases
-    use crate::app::usecases::auth::{login::LoginHandlerImpl, register::RegisterHandlerImpl};
+    use crate::app::usecases::auth::{
+        get_info::GetInfoHandlerImpl, login::LoginHandlerImpl, register::RegisterHandlerImpl,
+    };
 
-    let login = LoginHandlerImpl::new(user_repo.clone(), hasher, jwt);
+    let login = LoginHandlerImpl::new(user_repo.clone(), hasher, jwt.clone());
     let register = RegisterHandlerImpl::new(
-        user_repo,
+        user_repo.clone(),
         crate::infrastructure::security::password::BcryptHasher,
-        crate::infrastructure::security::jwt::Hs256Jwt::new(&cfg.jwt_secret, cfg.jwt_exp_hours),
+        jwt.clone(),
     );
+    let get_info = GetInfoHandlerImpl::new(user_repo.clone(), jwt.clone());
 
     // State
     let deps = crate::interface::rest::state::ApiDeps {
         login_handler: Arc::new(login),
         register_handler: Arc::new(register),
+        get_info_handler: Arc::new(get_info),
     };
 
     let app: Router = crate::interface::rest::routes::routes().with_state(deps);
