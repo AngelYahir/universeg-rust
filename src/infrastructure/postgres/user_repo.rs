@@ -6,7 +6,7 @@ use tracing::error;
 use uuid::Uuid;
 
 use crate::app::ports::{AppError, UserRepository};
-use crate::domain::auth::{Email, PasswordHash, User, Username};
+use crate::domain::user::{Email, PasswordHash, User, Username};
 
 #[derive(Clone)]
 pub struct PgUserRepository {

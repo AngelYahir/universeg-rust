@@ -1,5 +1,5 @@
-use crate::domain::auth::errors::DomainError as AuthDomainError;
-use crate::domain::auth::{Email, User, Username};
+use crate::domain::user::errors::DomainError as AuthDomainError;
+use crate::domain::user::{Email, User, Username};
 use async_trait::async_trait;
 use uuid::Uuid;
 

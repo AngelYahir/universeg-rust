@@ -1,5 +1,5 @@
 use crate::app::ports::{AppError, JwtService, PasswordHasher, UserRepository};
-use crate::domain::auth::Email;
+use crate::domain::user::Email;
 use async_trait::async_trait;
 
 pub struct LoginCommand {

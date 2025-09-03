@@ -1,5 +1,5 @@
 use crate::app::ports::{AppError, JwtService, PasswordHasher, UserRepository};
-use crate::domain::auth::{Email, Username};
+use crate::domain::user::{Email, Username};
 use async_trait::async_trait;
 
 pub struct RegisterCommand {

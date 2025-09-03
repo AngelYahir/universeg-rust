@@ -1,19 +1,16 @@
-use crate::app::usecases::auth::get_info::GetInfoCommand;
-use axum::Extension;
 use axum::{Json, extract::State};
 use serde_json::json;
-use uuid::Uuid;
 use validator::Validate;
 
 use crate::app::usecases::auth::{login::LoginCommand, register::RegisterCommand};
 use crate::infrastructure::errors::ApiError;
 use crate::interface::rest::dto::auth::{AuthResponseDto, LoginDto, RegisterDto};
-use crate::interface::rest::state::ApiDeps;
+use crate::interface::rest::state::AuthState;
 
 type Result<T> = std::result::Result<T, ApiError>;
 
 pub async fn login(
-    State(deps): State<ApiDeps>,
+    State(deps): State<AuthState>,
     Json(dto): Json<LoginDto>,
 ) -> Result<Json<AuthResponseDto>> {
     if let Err(errs) = dto.validate() {
@@ -35,7 +32,7 @@ pub async fn login(
 }
 
 pub async fn register(
-    State(deps): State<ApiDeps>,
+    State(deps): State<AuthState>,
     Json(dto): Json<RegisterDto>,
 ) -> Result<Json<AuthResponseDto>> {
     if let Err(errs) = dto.validate() {
@@ -55,21 +52,4 @@ pub async fn register(
         token: res.jwt,
         username: res.username,
     }))
-}
-
-pub async fn get_info(
-    State(deps): State<ApiDeps>,
-    Extension(user_id): Extension<Uuid>,
-) -> Result<Json<serde_json::Value>> {
-    let user = deps
-        .get_info_handler
-        .handle(GetInfoCommand { user_id })
-        .await
-        .map_err(ApiError::from)?;
-    Ok(Json(json!({
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "is_email_verified": user.is_email_verified,
-    })))
 }

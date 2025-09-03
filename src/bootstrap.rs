@@ -1,5 +1,7 @@
-use crate::interface::rest::state::ApiDeps;
-use axum::Router;
+use crate::interface::rest::middlewares::auth::auth_middleware;
+use crate::interface::rest::routes::{auth, user};
+use crate::interface::rest::state::{AuthState, CoreState, UserState};
+use axum::{Router, middleware};
 use std::sync::Arc;
 
 pub async fn build_app() -> anyhow::Result<Router> {
@@ -14,9 +16,8 @@ pub async fn build_app() -> anyhow::Result<Router> {
         crate::infrastructure::security::jwt::Hs256Jwt::new(&cfg.jwt_secret, cfg.jwt_exp_hours);
 
     // Use cases
-    use crate::app::usecases::auth::{
-        get_info::GetInfoHandlerImpl, login::LoginHandlerImpl, register::RegisterHandlerImpl,
-    };
+    use crate::app::usecases::auth::{login::LoginHandlerImpl, register::RegisterHandlerImpl};
+    use crate::app::usecases::user::get_info::GetInfoHandlerImpl;
 
     let login = LoginHandlerImpl::new(user_repo.clone(), hasher, jwt.clone());
     let register = RegisterHandlerImpl::new(
@@ -26,15 +27,33 @@ pub async fn build_app() -> anyhow::Result<Router> {
     );
     let get_info = GetInfoHandlerImpl::new(user_repo.clone());
 
-    // State
-    let deps = ApiDeps {
-        login_handler: Arc::new(login),
-        register_handler: Arc::new(register),
-        get_info_handler: Arc::new(get_info),
-        jwt_service: Arc::new(jwt),
+    // States
+    let core_state = CoreState {
+        jwt_service: Arc::new(jwt.clone()),
     };
 
-    let app: Router = crate::interface::rest::routes::routes(deps);
+    let auth_state = AuthState {
+        core: core_state.clone(),
+        login_handler: Arc::new(login),
+        register_handler: Arc::new(register),
+    };
+
+    let user_state = UserState {
+        core: core_state.clone(),
+        get_info_handler: Arc::new(get_info),
+    };
+
+    let auth_router = auth::routes().with_state(auth_state.clone());
+    let user_router = user::routes()
+        .layer(middleware::from_fn_with_state(
+            core_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(user_state.clone());
+
+    let app: Router = crate::interface::rest::routes::routes()
+        .nest("/auth", auth_router)
+        .nest("/user", user_router);
 
     Ok(app)
 }

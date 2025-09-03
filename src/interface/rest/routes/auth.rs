@@ -1,20 +1,9 @@
-use crate::interface::rest::middlewares::auth::auth_middleware;
-use crate::interface::rest::{controllers::auth as ctrl, state::ApiDeps};
-use axum::{
-    Router, middleware,
-    routing::{get, post},
-};
+use crate::interface::rest::{controllers::auth as ctrl, state::AuthState};
+use axum::Router;
+use axum::routing::post;
 
-pub fn routes(deps: ApiDeps) -> Router<()> {
+pub fn routes() -> Router<AuthState> {
     Router::new()
-        .route("/auth/login", post(ctrl::login))
-        .route("/auth/register", post(ctrl::register))
-        .route(
-            "/auth/me",
-            get(ctrl::get_info).layer(middleware::from_fn_with_state(
-                deps.clone(),
-                auth_middleware,
-            )),
-        )
-        .with_state(deps)
+        .route("/login", post(ctrl::login))
+        .route("/register", post(ctrl::register))
 }
