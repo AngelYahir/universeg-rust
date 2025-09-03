@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::app::ports::{AppError, JwtService, PasswordHasher, UserRepository};
 use crate::domain::user::Email;
 use async_trait::async_trait;
@@ -17,24 +19,23 @@ pub trait LoginHandler: Send + Sync {
     async fn handle(&self, cmd: LoginCommand) -> Result<LoginResult, AppError>;
 }
 
-pub struct LoginHandlerImpl<R, H, J> {
+pub struct LoginHandlerImpl<R, H> {
     repo: R,
     hasher: H,
-    jwt: J,
+    jwt: Arc<dyn JwtService>,
 }
 
-impl<R, H, J> LoginHandlerImpl<R, H, J> {
-    pub fn new(repo: R, hasher: H, jwt: J) -> Self {
+impl<R, H> LoginHandlerImpl<R, H> {
+    pub fn new(repo: R, hasher: H, jwt: Arc<dyn JwtService>) -> Self {
         Self { repo, hasher, jwt }
     }
 }
 
 #[async_trait]
-impl<R, H, J> LoginHandler for LoginHandlerImpl<R, H, J>
+impl<R, H> LoginHandler for LoginHandlerImpl<R, H>
 where
     R: UserRepository,
     H: PasswordHasher,
-    J: JwtService,
 {
     async fn handle(&self, cmd: LoginCommand) -> Result<LoginResult, AppError> {
         let email = Email::parse(&cmd.email).map_err(|_| AppError::InvalidCredentials)?;

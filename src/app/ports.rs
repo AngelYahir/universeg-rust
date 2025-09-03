@@ -35,7 +35,7 @@ pub trait PasswordHasher: Send + Sync {
     async fn verify(&self, password: &str, hash: &str) -> Result<bool, AppError>;
 }
 
-#[async_trait]
+#[async_trait::async_trait]
 pub trait JwtService: Send + Sync {
     async fn sign(&self, user_id: Uuid) -> Result<String, AppError>;
     async fn verify(&self, token: &str) -> Result<Uuid, AppError>;

@@ -1,6 +1,6 @@
 use crate::app::usecases::user::get_info::GetInfoCommand;
 use crate::infrastructure::errors::ApiError;
-use crate::interface::rest::state::UserState;
+use crate::interface::rest::routes::user::UserState;
 use axum::Extension;
 use axum::{Json, extract::State};
 use serde_json::json;

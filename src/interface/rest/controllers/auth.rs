@@ -5,7 +5,7 @@ use validator::Validate;
 use crate::app::usecases::auth::{login::LoginCommand, register::RegisterCommand};
 use crate::infrastructure::errors::ApiError;
 use crate::interface::rest::dto::auth::{AuthResponseDto, LoginDto, RegisterDto};
-use crate::interface::rest::state::AuthState;
+use crate::interface::rest::routes::auth::AuthState;
 
 type Result<T> = std::result::Result<T, ApiError>;
 

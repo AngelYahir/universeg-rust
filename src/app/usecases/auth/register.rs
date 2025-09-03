@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::app::ports::{AppError, JwtService, PasswordHasher, UserRepository};
 use crate::domain::user::{Email, Username};
 use async_trait::async_trait;
@@ -18,24 +20,23 @@ pub trait RegisterHandler: Send + Sync {
     async fn handle(&self, cmd: RegisterCommand) -> Result<RegisterResult, AppError>;
 }
 
-pub struct RegisterHandlerImpl<R, H, J> {
+pub struct RegisterHandlerImpl<R, H> {
     repo: R,
     hasher: H,
-    jwt: J,
+    jwt: Arc<dyn JwtService>,
 }
 
-impl<R, H, J> RegisterHandlerImpl<R, H, J> {
-    pub fn new(repo: R, hasher: H, jwt: J) -> Self {
+impl<R, H> RegisterHandlerImpl<R, H> {
+    pub fn new(repo: R, hasher: H, jwt: Arc<dyn JwtService>) -> Self {
         Self { repo, hasher, jwt }
     }
 }
 
 #[async_trait]
-impl<R, H, J> RegisterHandler for RegisterHandlerImpl<R, H, J>
+impl<R, H> RegisterHandler for RegisterHandlerImpl<R, H>
 where
     R: UserRepository,
     H: PasswordHasher,
-    J: JwtService,
 {
     async fn handle(&self, cmd: RegisterCommand) -> Result<RegisterResult, AppError> {
         let email = Email::parse(&cmd.email).map_err(|_| AppError::Conflict)?;
