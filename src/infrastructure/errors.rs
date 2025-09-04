@@ -5,12 +5,18 @@ use axum::{
 };
 use serde::Serialize;
 use serde_json::{Value, json};
+use utoipa::ToSchema;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ApiError {
+    #[schema(example = 400)]
     #[serde(skip)]
     status: StatusCode,
+
+    #[schema(example = "Bad request")]
     pub message: String,
+
+    #[schema(example = json!({"field": "error details"}))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<Value>,
 }

@@ -9,6 +9,18 @@ use crate::interface::rest::routes::auth::AuthState;
 
 type Result<T> = std::result::Result<T, ApiError>;
 
+#[utoipa::path(
+    post,
+    path = "/auth/login",
+    request_body = LoginDto,
+    tag = "Auth",
+    responses(
+        (status = 200, description = "User logged in successfully", body = AuthResponseDto),
+        (status = 400, description = "Bad request", body = ApiError),
+        (status = 401, description = "Unauthorized", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn login(
     State(deps): State<AuthState>,
     Json(dto): Json<LoginDto>,
@@ -31,6 +43,17 @@ pub async fn login(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/auth/register",
+    request_body = RegisterDto,
+    tag = "Auth",
+    responses(
+        (status = 200, description = "User registered successfully", body = AuthResponseDto),
+        (status = 400, description = "Bad request", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn register(
     State(deps): State<AuthState>,
     Json(dto): Json<RegisterDto>,

@@ -1,6 +1,7 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
+use utoipa::ToSchema;
 use validator::{Validate, ValidationError};
 
 static USERNAME_REGEX: LazyLock<Regex> =
@@ -9,15 +10,20 @@ static USERNAME_REGEX: LazyLock<Regex> =
 static PASSWORD_ALLOWED_CHARS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z\d@$!%*?&]+$").unwrap());
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct RegisterDto {
+    #[schema(example = "johndoe")]
     #[validate(regex(
         path = *USERNAME_REGEX,
         message = "Username must be 3-16 characters long and can contain letters, numbers, and underscores"
     ))]
     pub username: String,
+
+    #[schema(example = "gamer@universeg.gg")]
     #[validate(email(message = "Invalid email format"))]
     pub email: String,
+
+    #[schema(example = "P@ssw0rd!")]
     #[validate(custom(
         function = validate_password,
         message = "Password must be ≥8 chars and include upper, lower, digit, and special (@$!%*?&)"
@@ -25,10 +31,12 @@ pub struct RegisterDto {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct LoginDto {
+    #[schema(example = "gamer@universeg.gg")]
     #[validate(email(message = "Invalid email format"))]
     pub email: String,
+    #[schema(example = "P@ssw0rd!")]
     #[validate(custom(
         function = validate_password,
         message = "Password must be ≥8 chars and include upper, lower, digit, and special (@$!%*?&)"
@@ -36,9 +44,12 @@ pub struct LoginDto {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct AuthResponseDto {
+    #[schema(example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")]
     pub token: String,
+
+    #[schema(example = "johndoe")]
     pub username: String,
 }
 
