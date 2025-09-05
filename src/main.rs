@@ -2,11 +2,7 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tracing::info;
 
-mod app;
-mod bootstrap;
-mod domain;
-mod infrastructure;
-mod interface;
+use universeg_api::{bootstrap, infrastructure};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
