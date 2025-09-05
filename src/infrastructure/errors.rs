@@ -64,6 +64,13 @@ impl From<validator::ValidationErrors> for ApiError {
 
 impl From<crate::app::ports::AppError> for ApiError {
     fn from(err: crate::app::ports::AppError) -> Self {
-        ApiError::internal(err.to_string())
+        use crate::app::ports::AppError;
+        match err {
+            err @ AppError::NotFound => ApiError::new(StatusCode::NOT_FOUND, err.to_string()),
+            err @ AppError::InvalidCredentials => ApiError::unauthorized(err.to_string()),
+            err @ AppError::Conflict => ApiError::new(StatusCode::CONFLICT, err.to_string()),
+            AppError::AuthDomain(e) => ApiError::bad_request(e.to_string()),
+            AppError::Infra(e) => ApiError::internal(e.to_string()),
+        }
     }
 }

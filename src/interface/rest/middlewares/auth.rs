@@ -8,10 +8,13 @@ use crate::interface::rest::state::CoreState;
 
 pub async fn auth_middleware(
     State(core): State<CoreState>,
-    TypedHeader(Authorization(bearer)): TypedHeader<Authorization<Bearer>>,
+    auth_header: Option<TypedHeader<Authorization<Bearer>>>,
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response, ApiError> {
+    let auth_header =
+        auth_header.ok_or_else(|| ApiError::unauthorized("Missing Authorization header"))?;
+    let TypedHeader(Authorization(bearer)) = auth_header;
     let token = bearer.token();
 
     let user_id: Uuid = core
