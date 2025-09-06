@@ -43,7 +43,14 @@ impl PasswordHash {
             Err(DomainError::UnsupportedHash)
         }
     }
+
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn fake_for_tests() -> Self {
+        let hash = "$2b$12$C6UzMDM.H6dfI/f/IKcEe.u9F7c/F7kh/3Gzdh0dX8GZFOD4oTi2.";
+        Self::from_hash(hash.to_string()).expect("bcrypt fake válido para tests")
     }
 }

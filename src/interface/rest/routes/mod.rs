@@ -1,6 +1,5 @@
 use axum::{Router, routing::get};
 use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
 use crate::infrastructure::swagger::config::SecurityAddon;
 use crate::interface::rest::controllers as ctrls;
@@ -21,10 +20,10 @@ pub mod user;
     ),
     modifiers(&SecurityAddon)
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 pub fn routes() -> Router<()> {
     Router::new()
         .route("/", get(|| async { "Hello there" }))
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+
 }

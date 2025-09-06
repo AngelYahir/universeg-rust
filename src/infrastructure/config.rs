@@ -8,6 +8,8 @@ pub struct Config {
     pub debug: bool,
     pub jwt_secret: String,
     pub jwt_exp_hours: i64,
+    pub mongo_uri: String,
+    pub mongo_db_name: String,
 }
 
 impl Config {
@@ -28,6 +30,8 @@ impl Config {
             .unwrap_or_else(|_| "8".to_string())
             .parse::<i64>()
             .map_err(|e| anyhow::anyhow!("Invalid JWT_EXP_HOURS value: {e}"))?;
+        let mongo_uri = require_env("MONGO_URI")?;
+        let mongo_db_name = require_env("MONGO_DB_NAME")?;
 
         Ok(Self {
             database_url,
@@ -35,6 +39,8 @@ impl Config {
             debug,
             jwt_secret,
             jwt_exp_hours,
+            mongo_uri,
+            mongo_db_name,
         })
     }
 }
