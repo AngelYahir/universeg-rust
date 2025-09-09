@@ -6,11 +6,11 @@ use std::sync::Arc;
 use tower::ServiceExt;
 use uuid::Uuid;
 
+use crate::common;
 use universeg_api::app::ports::{AppError, JwtService, PasswordHasher, UserRepository};
 use universeg_api::app::usecases::auth::login::{LoginCommand, LoginHandler, LoginHandlerImpl};
-use crate::common;
-use universeg_api::domain::user::{Email, User, Username};
 use universeg_api::domain::user::vo::PasswordHash;
+use universeg_api::domain::user::{Email, User, Username};
 
 // Mock implementations for testing
 #[derive(Clone)]
@@ -106,7 +106,10 @@ fn create_test_user() -> User {
     let id = Uuid::new_v4();
     let email = Email::parse("test@universeg.gg").unwrap();
     let username = Username::parse("testuser").unwrap();
-    let password_hash = PasswordHash::from_hash("$2b$12$C6UzMDM.H6dfI/f/IKcEe.u9F7c/F7kh/3Gzdh0dX8GZFOD4oTi2.".to_string()).unwrap();
+    let password_hash = PasswordHash::from_hash(
+        "$2b$12$C6UzMDM.H6dfI/f/IKcEe.u9F7c/F7kh/3Gzdh0dX8GZFOD4oTi2.".to_string(),
+    )
+    .unwrap();
 
     User::new(id, email, username, password_hash, true)
 }
@@ -257,8 +260,8 @@ mod login_route_tests {
         // But we can test that the route exists and processes the request
         assert!(
             response.status() == StatusCode::UNAUTHORIZED
-            || response.status() == StatusCode::INTERNAL_SERVER_ERROR
-            || response.status() == StatusCode::OK
+                || response.status() == StatusCode::INTERNAL_SERVER_ERROR
+                || response.status() == StatusCode::OK
         );
     }
 

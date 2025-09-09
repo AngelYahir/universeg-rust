@@ -4,6 +4,7 @@ use std::sync::Arc;
 pub struct CoreState {
     pub jwt_service: Arc<dyn crate::app::ports::JwtService>,
     pub pool: crate::infrastructure::postgres::pool::DbPool,
-    #[warn(dead_code)]
+    #[allow(dead_code)]
     pub mongo_db: crate::infrastructure::mongo::connection::MongoDb,
+    pub mailer: Arc<dyn crate::app::usecases::mail::send::MailSender>,
 }

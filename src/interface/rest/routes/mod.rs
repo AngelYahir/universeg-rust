@@ -12,6 +12,7 @@ pub mod user;
     paths(
         ctrls::auth::login,
         ctrls::auth::register,
+        ctrls::auth::verify_email,
         ctrls::user::get_info,
     ),
     tags(

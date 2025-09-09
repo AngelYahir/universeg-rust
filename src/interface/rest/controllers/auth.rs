@@ -1,8 +1,10 @@
-use axum::{Json, extract::State};
+use axum::{Json, extract::Query, extract::State, response::Html};
 use serde_json::json;
 use validator::Validate;
 
-use crate::app::usecases::auth::{login::LoginCommand, register::RegisterCommand};
+use crate::app::usecases::auth::{
+    email_ver::VerifyTokenCommand, login::LoginCommand, register::RegisterCommand,
+};
 use crate::infrastructure::errors::ApiError;
 use crate::interface::rest::dto::auth::{AuthResponseDto, LoginDto, RegisterDto};
 use crate::interface::rest::routes::auth::AuthState;
@@ -71,8 +73,109 @@ pub async fn register(
         })
         .await
         .map_err(ApiError::from)?;
+
     Ok(Json(AuthResponseDto {
         token: res.jwt,
         username: res.username,
     }))
+}
+
+#[derive(serde::Deserialize)]
+pub struct VerifyEmailQuery {
+    token: String,
+}
+
+#[utoipa::path(
+    get,
+    path = "/auth/verify-email",
+    params(
+        ("token" = String, Query, description = "Email verification token")
+    ),
+    tag = "Auth",
+    responses(
+        (status = 200, description = "Email verified successfully", content_type = "text/html"),
+        (status = 400, description = "Invalid or expired token", content_type = "text/html"),
+        (status = 500, description = "Internal server error", content_type = "text/html"),
+    )
+)]
+pub async fn verify_email(
+    State(deps): State<AuthState>,
+    Query(params): Query<VerifyEmailQuery>,
+) -> Html<String> {
+    match deps
+        .verify_token_handler
+        .handle(VerifyTokenCommand {
+            token: params.token,
+        })
+        .await
+    {
+        Ok(_) => Html(
+            r#"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Email Verified</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                    .success { color: #4CAF50; }
+                    .container { max-width: 400px; margin: 0 auto; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1 class="success">✓ Email Verified Successfully!</h1>
+                    <p>Your email has been verified. You can now access all features of your account.</p>
+                    <a href="/">Go to Home</a>
+                </div>
+            </body>
+            </html>
+            "#.to_string()
+        ),
+        Err(err) => {
+            let (title, message) = match err {
+                crate::app::ports::AppError::InvalidToken => (
+                    "Invalid Token",
+                    "The verification token is invalid or malformed."
+                ),
+                crate::app::ports::AppError::TokenExpired => (
+                    "Token Expired",
+                    "The verification token has expired. Please request a new verification email."
+                ),
+                crate::app::ports::AppError::TokenAlreadyUsed => (
+                    "Token Already Used",
+                    "This verification token has already been used."
+                ),
+                _ => (
+                    "Error",
+                    "An error occurred while verifying your email. Please try again later."
+                ),
+            };
+
+            Html(
+                format!(
+                    r#"
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>{}</title>
+                        <style>
+                            body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; }}
+                            .error {{ color: #f44336; }}
+                            .container {{ max-width: 400px; margin: 0 auto; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h1 class="error">✗ {}</h1>
+                            <p>{}</p>
+                            <a href="/">Go to Home</a>
+                        </div>
+                    </body>
+                    </html>
+                    "#,
+                    title, title, message
+                )
+            )
+        }
+    }
 }

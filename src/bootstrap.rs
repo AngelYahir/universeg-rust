@@ -1,8 +1,8 @@
+use crate::interface::rest::routes::ApiDoc;
 use axum::Router;
 use std::sync::Arc;
-use utoipa_swagger_ui::SwaggerUi;
-use crate::interface::rest::routes::ApiDoc;
 use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 pub async fn build_app() -> anyhow::Result<Router> {
     // Core infra
@@ -16,19 +16,31 @@ pub async fn build_app() -> anyhow::Result<Router> {
         &cfg.jwt_secret,
         cfg.jwt_exp_hours,
     ));
+    let mailer = Arc::new(crate::infrastructure::email::smtp::SmtpMailSender::new(
+        crate::infrastructure::email::smtp::SmtpMailerConfig {
+            from_name: cfg.from_name.clone(),
+            from_email: cfg.from_email.clone(),
+            relay: cfg.relay.clone(),
+            username: cfg.username.clone(),
+            password: cfg.password.clone(),
+            pool_size: cfg.pool_size,
+            start_tls: cfg.start_tls,
+        },
+    )?);
 
     // CoreState
     let core = crate::interface::rest::state::CoreState {
         pool,
         jwt_service: jwt,
         mongo_db,
+        mailer,
     };
 
     // Mount routers
     let auth_router = crate::interface::rest::routes::auth::mount(core.clone());
     let user_router = crate::interface::rest::routes::user::mount(core.clone());
-    let swagger_router = SwaggerUi::new("/api/docs")
-        .url("/api/docs/openapi.json", ApiDoc::openapi());
+    let swagger_router =
+        SwaggerUi::new("/api/docs").url("/api/docs/openapi.json", ApiDoc::openapi());
 
     // Root router
     let app: Router = crate::interface::rest::routes::routes()

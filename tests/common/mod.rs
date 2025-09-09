@@ -21,16 +21,27 @@ pub async fn build_test_app() -> Result<Router, Box<dyn std::error::Error + Send
 
     // Build the app without calling init_tracing again
     let config = universeg_api::infrastructure::config::Config::from_env()?;
-    let pool = universeg_api::infrastructure::postgres::pool::init_db_pool(&config.database_url).await?;
-    let mongo_db = universeg_api::infrastructure::mongo::connection::init_mongo(&config.mongo_uri, &config.mongo_db_name).await?;
-    let jwt_service = std::sync::Arc::new(
-        universeg_api::infrastructure::security::jwt::Hs256Jwt::new(&config.jwt_secret, config.jwt_exp_hours)
-    );
+    let pool =
+        universeg_api::infrastructure::postgres::pool::init_db_pool(&config.database_url).await?;
+    let mongo_db = universeg_api::infrastructure::mongo::connection::init_mongo(
+        &config.mongo_uri,
+        &config.mongo_db_name,
+    )
+    .await?;
+    let jwt_service =
+        std::sync::Arc::new(universeg_api::infrastructure::security::jwt::Hs256Jwt::new(
+            &config.jwt_secret,
+            config.jwt_exp_hours,
+        ));
+
+    // Create test mailer
+    let mailer = std::sync::Arc::new(universeg_api::app::usecases::mail::send::TestMailSender);
 
     let core_state = universeg_api::interface::rest::state::CoreState {
         pool: pool.clone(),
         mongo_db,
         jwt_service,
+        mailer,
     };
 
     // Mount routers like in bootstrap

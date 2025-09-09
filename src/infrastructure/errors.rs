@@ -71,6 +71,7 @@ impl From<crate::app::ports::AppError> for ApiError {
             err @ AppError::Conflict => ApiError::new(StatusCode::CONFLICT, err.to_string()),
             AppError::AuthDomain(e) => ApiError::bad_request(e.to_string()),
             AppError::Infra(e) => ApiError::internal(e.to_string()),
+            AppError::TokenExpired | AppError::TokenAlreadyUsed | AppError::InvalidToken => todo!(),
         }
     }
 }

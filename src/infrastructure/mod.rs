@@ -8,6 +8,11 @@ pub mod mongo {
     pub mod models;
 }
 
+pub mod email {
+    pub mod service;
+    pub mod smtp;
+}
+
 pub mod swagger {
     pub mod config;
 }

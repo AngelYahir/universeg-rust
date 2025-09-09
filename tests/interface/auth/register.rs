@@ -5,11 +5,41 @@ use std::sync::Arc;
 use tower::ServiceExt;
 use uuid::Uuid;
 
-use universeg_api::app::ports::{AppError, JwtService, PasswordHasher, UserRepository};
-use universeg_api::app::usecases::auth::register::{RegisterCommand, RegisterHandler, RegisterHandlerImpl};
 use crate::common;
-use universeg_api::domain::user::{Email, User, Username};
+use universeg_api::app::ports::{AppError, JwtService, PasswordHasher, UserRepository};
+use universeg_api::app::usecases::auth::email_ver::{
+    EmailVerCommand, EmailVerHandler, EmailVerResult,
+};
+use universeg_api::app::usecases::auth::register::{
+    RegisterCommand, RegisterHandler, RegisterHandlerImpl,
+};
 use universeg_api::domain::user::vo::PasswordHash;
+use universeg_api::domain::user::{Email, User, Username};
+
+// Mock EmailVerHandler for testing
+#[derive(Clone)]
+struct MockEmailVerHandler {
+    should_fail: bool,
+}
+
+impl MockEmailVerHandler {
+    fn new(should_fail: bool) -> Self {
+        Self { should_fail }
+    }
+}
+
+#[async_trait::async_trait]
+impl EmailVerHandler for MockEmailVerHandler {
+    async fn handle(&self, _cmd: EmailVerCommand) -> Result<EmailVerResult, AppError> {
+        if self.should_fail {
+            Err(AppError::Infra(anyhow::anyhow!(
+                "Email verification failed"
+            )))
+        } else {
+            Ok(EmailVerResult)
+        }
+    }
+}
 
 // Mock implementations for testing
 #[derive(Clone)]
@@ -54,9 +84,13 @@ impl UserRepository for MockUserRepository {
         }
 
         let id = Uuid::new_v4();
-        let user = User::new(id, email, username,
+        let user = User::new(
+            id,
+            email,
+            username,
             PasswordHash::from_hash(password_hash).unwrap(),
-            false);
+            false,
+        );
         Ok(user)
     }
 
@@ -130,7 +164,10 @@ fn create_test_user(email: &str, username: &str) -> User {
     let id = Uuid::new_v4();
     let email = Email::parse(email).unwrap();
     let username = Username::parse(username).unwrap();
-    let password_hash = PasswordHash::from_hash("$2b$12$C6UzMDM.H6dfI/f/IKcEe.u9F7c/F7kh/3Gzdh0dX8GZFOD4oTi2.".to_string()).unwrap();
+    let password_hash = PasswordHash::from_hash(
+        "$2b$12$C6UzMDM.H6dfI/f/IKcEe.u9F7c/F7kh/3Gzdh0dX8GZFOD4oTi2.".to_string(),
+    )
+    .unwrap();
 
     User::new(id, email, username, password_hash, false)
 }
@@ -146,7 +183,8 @@ mod register_handler_tests {
         let hasher = MockPasswordHasher::new(false);
         let jwt_service = Arc::new(MockJwtService::new(false));
 
-        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service);
+        let email_ver_handler = Arc::new(MockEmailVerHandler::new(false));
+        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service, email_ver_handler);
 
         let command = RegisterCommand {
             email: "new_user@universeg.gg".to_string(),
@@ -172,7 +210,8 @@ mod register_handler_tests {
         let hasher = MockPasswordHasher::new(false);
         let jwt_service = Arc::new(MockJwtService::new(false));
 
-        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service);
+        let email_ver_handler = Arc::new(MockEmailVerHandler::new(false));
+        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service, email_ver_handler);
 
         let command = RegisterCommand {
             email: "existing@universeg.gg".to_string(),
@@ -194,7 +233,8 @@ mod register_handler_tests {
         let hasher = MockPasswordHasher::new(false);
         let jwt_service = Arc::new(MockJwtService::new(false));
 
-        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service);
+        let email_ver_handler = Arc::new(MockEmailVerHandler::new(false));
+        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service, email_ver_handler);
 
         let command = RegisterCommand {
             email: "invalid-email".to_string(),
@@ -216,7 +256,8 @@ mod register_handler_tests {
         let hasher = MockPasswordHasher::new(false);
         let jwt_service = Arc::new(MockJwtService::new(false));
 
-        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service);
+        let email_ver_handler = Arc::new(MockEmailVerHandler::new(false));
+        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service, email_ver_handler);
 
         let command = RegisterCommand {
             email: "valid@universeg.gg".to_string(),
@@ -238,7 +279,8 @@ mod register_handler_tests {
         let hasher = MockPasswordHasher::new(true); // Will fail to hash
         let jwt_service = Arc::new(MockJwtService::new(false));
 
-        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service);
+        let email_ver_handler = Arc::new(MockEmailVerHandler::new(false));
+        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service, email_ver_handler);
 
         let command = RegisterCommand {
             email: "new_user@universeg.gg".to_string(),
@@ -260,7 +302,8 @@ mod register_handler_tests {
         let hasher = MockPasswordHasher::new(false);
         let jwt_service = Arc::new(MockJwtService::new(false));
 
-        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service);
+        let email_ver_handler = Arc::new(MockEmailVerHandler::new(false));
+        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service, email_ver_handler);
 
         let command = RegisterCommand {
             email: "new_user@universeg.gg".to_string(),
@@ -282,7 +325,8 @@ mod register_handler_tests {
         let hasher = MockPasswordHasher::new(false);
         let jwt_service = Arc::new(MockJwtService::new(true)); // JWT signing will fail
 
-        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service);
+        let email_ver_handler = Arc::new(MockEmailVerHandler::new(false));
+        let handler = RegisterHandlerImpl::new(repo, hasher, jwt_service, email_ver_handler);
 
         let command = RegisterCommand {
             email: "new_user@universeg.gg".to_string(),
@@ -329,8 +373,8 @@ mod register_route_tests {
         // But we can test that the route exists and processes the request
         assert!(
             response.status() == StatusCode::CONFLICT
-            || response.status() == StatusCode::INTERNAL_SERVER_ERROR
-            || response.status() == StatusCode::OK
+                || response.status() == StatusCode::INTERNAL_SERVER_ERROR
+                || response.status() == StatusCode::OK
         );
     }
 

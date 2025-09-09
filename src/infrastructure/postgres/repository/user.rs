@@ -1,4 +1,4 @@
-use super::pool::DbPool;
+use super::super::pool::DbPool;
 use anyhow::Context;
 use async_trait::async_trait;
 use sqlx::FromRow;

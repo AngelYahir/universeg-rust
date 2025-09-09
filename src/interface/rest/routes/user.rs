@@ -9,7 +9,7 @@ pub struct UserState {
 
 pub fn mount(core: crate::interface::rest::state::CoreState) -> Router<()> {
     let user_repo =
-        crate::infrastructure::postgres::user_repo::PgUserRepository::new(core.pool.clone());
+        crate::infrastructure::postgres::repository::user::PgUserRepository::new(core.pool.clone());
     use crate::app::usecases::user::get_info::GetInfoHandlerImpl;
     let get_info = GetInfoHandlerImpl::new(user_repo);
 

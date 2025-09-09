@@ -10,6 +10,13 @@ pub struct Config {
     pub jwt_exp_hours: i64,
     pub mongo_uri: String,
     pub mongo_db_name: String,
+    pub from_email: String,
+    pub from_name: String,
+    pub relay: String,
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub pool_size: Option<u32>,
+    pub start_tls: bool,
 }
 
 impl Config {
@@ -32,6 +39,13 @@ impl Config {
             .map_err(|e| anyhow::anyhow!("Invalid JWT_EXP_HOURS value: {e}"))?;
         let mongo_uri = require_env("MONGO_URI")?;
         let mongo_db_name = require_env("MONGO_DB_NAME")?;
+        let from_email = require_env("FROM_EMAIL")?;
+        let from_name = require_env("FROM_NAME")?;
+        let relay = require_env("SMTP_RELAY")?;
+        let username = env::var("SMTP_USERNAME").ok();
+        let password = env::var("SMTP_PASSWORD").ok();
+        let pool_size = env::var("SMTP_POOL_SIZE").ok().and_then(|s| s.parse().ok());
+        let start_tls = env::var("SMTP_START_TLS").ok().and_then(|s| s.parse().ok()).unwrap_or(true);
 
         Ok(Self {
             database_url,
@@ -41,6 +55,13 @@ impl Config {
             jwt_exp_hours,
             mongo_uri,
             mongo_db_name,
+            from_email,
+            from_name,
+            relay,
+            username,
+            password,
+            pool_size,
+            start_tls,       
         })
     }
 }

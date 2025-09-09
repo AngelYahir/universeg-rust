@@ -1,2 +1,5 @@
 pub mod pool;
-pub mod user_repo;
+pub mod repository {
+    pub mod user;
+    pub mod verification;
+}
