@@ -46,3 +46,17 @@ Cargo.lock                             // Locked versions of dependencies
 ## Architecture Diagram
 
 ![Universe G API Architecture DDD](./assets/diagram.png)
+
+## Project dependencies
+- **🌐 Web framework**: `axum`, `axum-extra`, `tower`, `http`
+- **⚡ Async runtime**: `tokio`, `async-trait`
+- **📄 Serialization**: `serde`, `serde_json`
+- **🗄️ Database**: `sqlx`, `mongodb`
+- **📧 Email**: `lettre`
+- **🔐 Authentication & Security**: `bcrypt`, `jsonwebtoken`
+- **🎲 Cryptography & Random**: `rand`, `rand_chacha`, `rand_core`, `sha2`, `hex`
+- **✅ Validation**: `validator`, `regex`
+- **🛠️ Utilities**: `anyhow`, `thiserror`, `uuid`, `chrono`
+- **⚙️ Configuration**: `dotenvy`
+- **📝 Logging**: `tracing`, `tracing-subscriber`
+- **📚 Documentation**: `utoipa`, `utoipa-swagger-ui`
